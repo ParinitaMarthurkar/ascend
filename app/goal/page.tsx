@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import GoalCard from "@/components/goal/GoalCard";
 import { goals } from "@/lib/goals";
-
+import { saveProgress } from "@/lib/storage";
 export default function GoalPage() {
     const router = useRouter();
     const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
@@ -34,7 +34,10 @@ export default function GoalPage() {
                             title={goal.title}
                             description={goal.description}
                             selected={selectedGoal === goal.id}
-                            onClick={() => setSelectedGoal(goal.id)}
+                            onClick={() => {
+                                setSelectedGoal(goal.id);
+                                saveProgress("selectedGoal", goal.id);
+                            }}
                         />
                     ))}
                 </div>

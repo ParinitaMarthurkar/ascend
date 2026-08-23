@@ -14,8 +14,8 @@ export default function ChallengeCard({
     return (
         <div
             className={`rounded-3xl border p-6 shadow-sm transition-all duration-300 ${completed
-                    ? "border-green-300 bg-green-50"
-                    : "border-[var(--border)] bg-white hover:-translate-y-1 hover:shadow-md"
+                ? "border-green-300 bg-green-50"
+                : "border-[var(--border)] bg-white hover:-translate-y-1 hover:shadow-md"
                 }`}
         >
             <div className="flex items-center justify-between">

@@ -1,4 +1,8 @@
-export default function Hero() {
+interface HeroProps {
+    goal: string;
+}
+
+export default function Hero({ goal }: HeroProps) {
     return (
         <section className="rounded-3xl bg-[var(--primary)] p-8 text-white">
             <p className="text-sm opacity-80">
@@ -10,7 +14,7 @@ export default function Hero() {
             </h1>
 
             <p className="mt-4 text-base opacity-90">
-                You're becoming an AI Engineer.
+                You're becoming a {goal}.
             </p>
         </section>
     );

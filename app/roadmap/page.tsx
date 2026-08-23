@@ -1,11 +1,32 @@
+"use client";
 import TimelineItem from "@/components/roadmap/TimelineItem";
 import Button from "@/components/ui/Button";
 import BottomNav from "@/components/navigation/BottomNav";
 
 import { roadmap } from "@/lib/roadmap";
-import { userProgress } from "@/lib/userprogress";
+
+
+import { useEffect, useState } from "react";
+import { loadProgress } from "@/lib/storage";
 
 export default function JourneyPage() {
+    const [userProgress, setUserProgress] = useState<any>(null);
+
+    useEffect(() => {
+        const progress = {
+            selectedGoal: loadProgress("selectedGoal", "aiEngineer"),
+            completedStages: [1],
+            readiness: 18,
+            streak: 5,
+            todayMission: 2,
+        };
+        setUserProgress(progress);
+    }, []);
+
+    if (!userProgress) {
+        return null;
+    }
+
     const currentRoadmap = roadmap[userProgress.selectedGoal];
 
     return (
@@ -32,7 +53,7 @@ export default function JourneyPage() {
                             key={stage.id}
                             title={stage.title}
                             duration={stage.duration}
-                            completed={userProgress.completedStages.includes(stage.id)}
+                            completed={stage.id === 1}
                             isLast={index === currentRoadmap.stages.length - 1}
                         />
                     ))}
