@@ -1,9 +1,8 @@
 "use client";
-import { loadProgress } from "@/lib/storage";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
-
 const levels = [
     {
         id: 1,
@@ -28,7 +27,7 @@ const levels = [
 export default function ExperiencePage() {
     const router = useRouter();
     const [selected, setSelected] = useState<number | null>(null);
-    const selectedGoal = loadProgress("selectedGoal", null);
+
     return (
         <main className="flex min-h-screen items-center justify-center bg-[var(--background)] px-6">
             <div className="w-full max-w-xl">

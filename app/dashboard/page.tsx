@@ -33,9 +33,11 @@ export default function DashboardPage() {
                 <Hero goal={goalName} />
 
                 <div className="mt-6">
-                    <MissionCard />
+                    <MissionCard
+                        title="Git & GitHub"
+                        duration="45 Minutes"
+                    />
                 </div>
-
                 <div className="mt-6">
                     <StatsGrid />
                 </div>

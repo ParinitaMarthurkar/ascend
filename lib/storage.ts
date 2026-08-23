@@ -1,19 +1,54 @@
-export function saveProgress(key: string, value: unknown) {
-    if (typeof window === "undefined") return;
-
-    localStorage.setItem(key, JSON.stringify(value));
+export interface UserProgress {
+    selectedGoal: string;
+    completedStages: number[];
+    readiness: number;
+    streak: number;
+    todayMission: number;
 }
 
-export function loadProgress<T>(key: string, defaultValue: T): T {
-    if (typeof window === "undefined") return defaultValue;
+const defaultProgress: UserProgress = {
+    selectedGoal: "aiEngineer",
+    completedStages: [1],
+    readiness: 18,
+    streak: 5,
+    todayMission: 2,
+};
 
-    const stored = localStorage.getItem(key);
+// New API
+export function saveUserProgress(progress: UserProgress) {
+    if (typeof window === "undefined") return;
 
-    if (!stored) return defaultValue;
+    localStorage.setItem("userProgress", JSON.stringify(progress));
+}
+
+export function loadUserProgress(): UserProgress {
+    if (typeof window === "undefined") {
+        return defaultProgress;
+    }
+
+    const stored = localStorage.getItem("userProgress");
+
+    if (!stored) return defaultProgress;
 
     try {
-        return JSON.parse(stored) as T;
+        return JSON.parse(stored) as UserProgress;
     } catch {
-        return defaultValue;
+        return defaultProgress;
     }
+}
+
+// Compatibility API
+export function saveProgress(key: keyof UserProgress, value: UserProgress[keyof UserProgress]) {
+    const progress = loadUserProgress();
+
+    saveUserProgress({
+        ...progress,
+        [key]: value,
+    });
+}
+
+export function loadProgress<T>(key: keyof UserProgress, defaultValue: T): T {
+    const progress = loadUserProgress();
+
+    return (progress[key] as T) ?? defaultValue;
 }
