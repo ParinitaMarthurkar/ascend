@@ -7,20 +7,17 @@ import { roadmap } from "@/lib/roadmap";
 
 
 import { useEffect, useState } from "react";
-import { loadProgress } from "@/lib/storage";
+import {
+    loadUserProgress,
+    completeCurrentStage,
+    loadProgress,
+} from "@/lib/storage";
 
 export default function JourneyPage() {
     const [userProgress, setUserProgress] = useState<any>(null);
 
     useEffect(() => {
-        const progress = {
-            selectedGoal: loadProgress("selectedGoal", "aiEngineer"),
-            completedStages: [1],
-            readiness: 18,
-            streak: 5,
-            todayMission: 2,
-        };
-        setUserProgress(progress);
+        setUserProgress(loadUserProgress());
     }, []);
 
     if (!userProgress) {
@@ -28,7 +25,10 @@ export default function JourneyPage() {
     }
 
     const currentRoadmap = roadmap[userProgress.selectedGoal];
-
+    function handleContinue() {
+        const updated = completeCurrentStage();
+        setUserProgress(updated);
+    }
     return (
         <main className="min-h-screen bg-[var(--background)] px-6 py-10 pb-24">
             <div
@@ -53,13 +53,17 @@ export default function JourneyPage() {
                             key={stage.id}
                             title={stage.title}
                             duration={stage.duration}
-                            completed={stage.id === 1}
+                            completed={userProgress.completedStages.includes(stage.id)}
                             isLast={index === currentRoadmap.stages.length - 1}
                         />
                     ))}
                 </section>
 
-                <Button fullWidth className="mt-6">
+                <Button
+                    fullWidth
+                    className="mt-6"
+                    onClick={handleContinue}
+                >
                     Continue Learning
                 </Button>
             </div>

@@ -47,6 +47,27 @@ export function saveProgress(key: keyof UserProgress, value: UserProgress[keyof 
     });
 }
 
+export function completeCurrentStage() {
+    const progress = loadUserProgress();
+
+    const nextStage =
+        Math.max(...progress.completedStages) + 1;
+
+    const updated = {
+        ...progress,
+        completedStages: [
+            ...progress.completedStages,
+            nextStage,
+        ],
+        readiness: Math.min(progress.readiness + 8, 100),
+        todayMission: nextStage + 1,
+    };
+
+    saveUserProgress(updated);
+
+    return updated;
+}
+
 export function loadProgress<T>(key: keyof UserProgress, defaultValue: T): T {
     const progress = loadUserProgress();
 
