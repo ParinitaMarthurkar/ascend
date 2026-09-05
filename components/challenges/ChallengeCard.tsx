@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import {
     loadChallengeProgress,
+    loadUserProgress,
     saveChallengeProgress,
     ChallengeProgressMap,
 } from "@/lib/storage";
@@ -30,11 +31,14 @@ export default function ChallengeCard({
 
     const [isRunning, setIsRunning] =
         useState(false);
-
+    const [streak, setStreak] = useState(0);
     useEffect(() => {
         const saved = loadChallengeProgress();
+        const userProgress = loadUserProgress();
 
         const challenge = saved[id];
+
+        setStreak(userProgress.streak);
 
         if (
             challenge &&
@@ -61,8 +65,9 @@ export default function ChallengeCard({
         challenge?.completed ?? false;
 
     const currentProgress =
-        challenge?.progress ?? 0;
-
+        type === "streak"
+            ? streak
+            : challenge?.progress ?? 0;
     function handleStart() {
         const current = loadChallengeProgress();
 
@@ -221,8 +226,8 @@ export default function ChallengeCard({
     return (
         <div
             className={`rounded-3xl border p-6 shadow-sm transition-all duration-300 ${completed
-                    ? "border-green-300 bg-green-50"
-                    : "border-[var(--border)] bg-white hover:-translate-y-1 hover:shadow-md"
+                ? "border-green-300 bg-green-50"
+                : "border-[var(--border)] bg-white hover:-translate-y-1 hover:shadow-md"
                 }`}
         >
             <div className="flex items-center justify-between">
@@ -239,7 +244,6 @@ export default function ChallengeCard({
                 {description}
             </p>
 
-            {/* Timer progress */}
             {type === "timer" &&
                 challenge?.started && (
                     <div className="mt-5">
@@ -267,7 +271,6 @@ export default function ChallengeCard({
                     </div>
                 )}
 
-            {/* Streak progress */}
             {type === "streak" && (
                 <div className="mt-5">
                     <div className="flex justify-between text-sm">

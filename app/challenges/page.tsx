@@ -7,15 +7,39 @@ import ChallengeCard from "@/components/challenges/ChallengeCard";
 import { challenges } from "@/lib/challenges";
 import {
     loadChallengeProgress,
+    loadUserProgress,
     ChallengeProgressMap,
 } from "@/lib/storage";
-
 export default function ChallengesPage() {
     const [progress, setProgress] =
         useState<ChallengeProgressMap>({});
 
     useEffect(() => {
-        setProgress(loadChallengeProgress());
+        function refreshProgress() {
+            const challengeProgress = loadChallengeProgress();
+            const userProgress = loadUserProgress();
+
+            const streak = userProgress.streak;
+
+            const updatedChallenges = {
+                ...challengeProgress,
+                3: {
+                    started: streak > 0,
+                    completed: streak >= 7,
+                    progress: Math.min(streak, 7),
+                    startedAt:
+                        challengeProgress[3]?.startedAt ?? null,
+                    elapsedSeconds:
+                        challengeProgress[3]?.elapsedSeconds ?? 0,
+                    lastActiveDate:
+                        userProgress.lastLearningDate,
+                },
+            };
+
+            setProgress(updatedChallenges);
+        }
+
+        refreshProgress();
     }, []);
 
     const completed = challenges.filter(

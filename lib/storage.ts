@@ -108,6 +108,8 @@ export function recordLearningDay() {
             startedAt:
                 streakChallenge?.startedAt ??
                 new Date().toISOString(),
+            elapsedSeconds:
+                streakChallenge?.elapsedSeconds ?? 0,
             lastActiveDate: today,
         },
     };
