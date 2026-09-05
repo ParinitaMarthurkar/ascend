@@ -1,21 +1,226 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import {
+    loadChallengeProgress,
+    saveChallengeProgress,
+    ChallengeProgressMap,
+} from "@/lib/storage";
+
 interface ChallengeCardProps {
+    id: number;
     title: string;
     description: string;
     xp: number;
-    completed: boolean;
+    type: "mission" | "timer" | "streak";
+    target: number;
 }
 
 export default function ChallengeCard({
+    id,
     title,
     description,
     xp,
-    completed,
+    type,
+    target,
 }: ChallengeCardProps) {
+    const [progress, setProgress] =
+        useState<ChallengeProgressMap>({});
+
+    const [isRunning, setIsRunning] =
+        useState(false);
+
+    useEffect(() => {
+        const saved = loadChallengeProgress();
+
+        const challenge = saved[id];
+
+        // Convert old saved challenge data safely
+        if (
+            challenge &&
+            typeof challenge.elapsedSeconds !== "number"
+        ) {
+            const updated = {
+                ...saved,
+                [id]: {
+                    ...challenge,
+                    elapsedSeconds: 0,
+                },
+            };
+
+            saveChallengeProgress(updated);
+            setProgress(updated);
+        } else {
+            setProgress(saved);
+        }
+    }, [id]);
+
+    const challenge = progress[id];
+
+    const completed =
+        challenge?.completed ?? false;
+
+    function handleStart() {
+        const current = loadChallengeProgress();
+
+        const updated = {
+            ...current,
+            [id]: {
+                started: true,
+                completed: false,
+                progress: current[id]?.progress ?? 0,
+                startedAt: new Date().toISOString(),
+                elapsedSeconds:
+                    current[id]?.elapsedSeconds ?? 0,
+                lastActiveDate:
+                    new Date().toISOString().split("T")[0],
+            },
+        };
+
+        saveChallengeProgress(updated);
+        setProgress(updated);
+
+        if (type === "timer") {
+            setIsRunning(true);
+        }
+    }
+
+    function handlePause() {
+        const current = loadChallengeProgress();
+        const currentChallenge = current[id];
+
+        if (!currentChallenge?.startedAt) {
+            setIsRunning(false);
+            return;
+        }
+
+        const startedAt =
+            new Date(
+                currentChallenge.startedAt
+            ).getTime();
+
+        const elapsedThisSession = Math.floor(
+            (Date.now() - startedAt) / 1000
+        );
+
+        const totalElapsed = Math.min(
+            currentChallenge.elapsedSeconds +
+            elapsedThisSession,
+            target * 60
+        );
+
+        const newProgress = Math.floor(
+            totalElapsed / 60
+        );
+
+        const updated = {
+            ...current,
+            [id]: {
+                ...currentChallenge,
+                startedAt: null,
+                elapsedSeconds: totalElapsed,
+                progress: newProgress,
+                completed:
+                    totalElapsed >= target * 60,
+            },
+        };
+
+        saveChallengeProgress(updated);
+        setProgress(updated);
+        setIsRunning(false);
+    }
+
+    function handleResume() {
+        const current = loadChallengeProgress();
+        const currentChallenge = current[id];
+
+        if (!currentChallenge || currentChallenge.completed) {
+            return;
+        }
+
+        const updated = {
+            ...current,
+            [id]: {
+                ...currentChallenge,
+                startedAt: new Date().toISOString(),
+            },
+        };
+
+        saveChallengeProgress(updated);
+        setProgress(updated);
+        setIsRunning(true);
+    }
+
+    useEffect(() => {
+        if (!isRunning || type !== "timer") {
+            return;
+        }
+
+        const interval = setInterval(() => {
+            setProgress((current) => {
+                const challenge = current[id];
+
+                if (
+                    !challenge ||
+                    challenge.completed ||
+                    !challenge.startedAt
+                ) {
+                    return current;
+                }
+
+                const startedAt =
+                    new Date(
+                        challenge.startedAt
+                    ).getTime();
+
+                const elapsedThisSession = Math.floor(
+                    (Date.now() - startedAt) / 1000
+                );
+
+                const totalElapsed = Math.min(
+                    challenge.elapsedSeconds +
+                    elapsedThisSession,
+                    target * 60
+                );
+
+                const newProgress = Math.floor(
+                    totalElapsed / 60
+                );
+
+                const isCompleted =
+                    totalElapsed >= target * 60;
+
+                const updated = {
+                    ...current,
+                    [id]: {
+                        ...challenge,
+                        progress: newProgress,
+                        completed: isCompleted,
+                    },
+                };
+
+                saveChallengeProgress(updated);
+
+                if (isCompleted) {
+                    setIsRunning(false);
+                }
+
+                return updated;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [id, isRunning, target, type]);
+
+    const currentProgress =
+        challenge?.progress ?? 0;
+
     return (
         <div
             className={`rounded-3xl border p-6 shadow-sm transition-all duration-300 ${completed
-                ? "border-green-300 bg-green-50"
-                : "border-[var(--border)] bg-white hover:-translate-y-1 hover:shadow-md"
+                    ? "border-green-300 bg-green-50"
+                    : "border-[var(--border)] bg-white hover:-translate-y-1 hover:shadow-md"
                 }`}
         >
             <div className="flex items-center justify-between">
@@ -32,13 +237,62 @@ export default function ChallengeCard({
                 {description}
             </p>
 
+            {type === "timer" &&
+                challenge?.started && (
+                    <div className="mt-5">
+                        <div className="flex justify-between text-sm">
+                            <span>Progress</span>
+
+                            <span>
+                                {currentProgress}/{target} minutes
+                            </span>
+                        </div>
+
+                        <div className="mt-2 h-3 rounded-full bg-[var(--border)]">
+                            <div
+                                className="h-full rounded-full bg-[var(--primary)] transition-all"
+                                style={{
+                                    width: `${Math.min(
+                                        (currentProgress /
+                                            target) *
+                                        100,
+                                        100
+                                    )}%`,
+                                }}
+                            />
+                        </div>
+                    </div>
+                )}
+
             <div className="mt-5">
                 {completed ? (
                     <span className="font-medium text-green-600">
-                        ✅ Completed
+                        ✓ Completed
                     </span>
+                ) : challenge?.started ? (
+                    type === "timer" ? (
+                        <button
+                            onClick={
+                                isRunning
+                                    ? handlePause
+                                    : handleResume
+                            }
+                            className="rounded-xl bg-[var(--primary)] px-5 py-3 text-white transition hover:opacity-90"
+                        >
+                            {isRunning
+                                ? "Pause"
+                                : "Resume"}
+                        </button>
+                    ) : (
+                        <span className="text-sm text-[var(--text-secondary)]">
+                            In progress
+                        </span>
+                    )
                 ) : (
-                    <button className="rounded-xl bg-[var(--primary)] px-5 py-3 text-white transition hover:opacity-90">
+                    <button
+                        onClick={handleStart}
+                        className="rounded-xl bg-[var(--primary)] px-5 py-3 text-white transition hover:opacity-90"
+                    >
                         Start Challenge
                     </button>
                 )}

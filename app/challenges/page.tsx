@@ -1,12 +1,30 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import BottomNav from "@/components/navigation/BottomNav";
 import ChallengeCard from "@/components/challenges/ChallengeCard";
 import { challenges } from "@/lib/challenges";
+import {
+    loadChallengeProgress,
+    ChallengeProgressMap,
+} from "@/lib/storage";
 
 export default function ChallengesPage() {
-    const completed = challenges.filter((c) => c.completed).length;
+    const [progress, setProgress] =
+        useState<ChallengeProgressMap>({});
+
+    useEffect(() => {
+        setProgress(loadChallengeProgress());
+    }, []);
+
+    const completed = challenges.filter(
+        (challenge) => progress[challenge.id]?.completed
+    ).length;
+
     const totalXP = challenges
-        .filter((c) => c.completed)
-        .reduce((sum, c) => sum + c.xp, 0);
+        .filter((challenge) => progress[challenge.id]?.completed)
+        .reduce((sum, challenge) => sum + challenge.xp, 0);
 
     return (
         <main className="min-h-screen bg-[var(--background)] px-6 py-8 pb-24">
@@ -14,7 +32,6 @@ export default function ChallengesPage() {
                 className="mx-auto w-full max-w-md"
                 style={{ margin: "0 auto" }}
             >
-                {/* Header */}
                 <div>
                     <p className="text-sm text-[var(--text-secondary)]">
                         Earn rewards while learning
@@ -25,9 +42,7 @@ export default function ChallengesPage() {
                     </h1>
                 </div>
 
-                {/* Stats */}
                 <div className="mt-8 grid grid-cols-2 gap-4">
-
                     <div className="rounded-3xl border border-[var(--border)] bg-white p-5 shadow-sm">
                         <p className="text-sm text-[var(--text-secondary)]">
                             Completed
@@ -47,22 +62,21 @@ export default function ChallengesPage() {
                             {totalXP}
                         </h2>
                     </div>
-
                 </div>
 
-                {/* Challenge List */}
                 <div className="mt-8 space-y-5">
                     {challenges.map((challenge) => (
                         <ChallengeCard
                             key={challenge.id}
+                            id={challenge.id}
                             title={challenge.title}
                             description={challenge.description}
                             xp={challenge.xp}
-                            completed={challenge.completed}
+                            type={challenge.type}
+                            target={challenge.target}
                         />
                     ))}
                 </div>
-
             </div>
 
             <BottomNav />

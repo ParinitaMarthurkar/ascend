@@ -45,4 +45,17 @@ export const lessons: Lesson[] = [
             "Searching and sorting",
         ],
     },
+    {
+        stageId: 4,
+        title: "NumPy",
+        description:
+            "Learn NumPy, the fundamental Python library for numerical computing and machine learning.",
+        topics: [
+            "NumPy arrays",
+            "Array creation and indexing",
+            "Array operations",
+            "Broadcasting",
+            "Mathematical and statistical operations",
+        ],
+    },
 ];
