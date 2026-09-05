@@ -47,14 +47,25 @@ export function loadUserProgress(): UserProgress {
 }
 
 function getToday(): string {
-    return new Date().toISOString().split("T")[0];
+    const date = new Date();
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
 }
 
 function getYesterday(): string {
     const date = new Date();
+
     date.setDate(date.getDate() - 1);
 
-    return date.toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
 }
 
 export function recordLearningDay() {
@@ -62,7 +73,7 @@ export function recordLearningDay() {
 
     const today = getToday();
 
-    // Already recorded today
+    // Don't count multiple learning sessions on the same day.
     if (progress.lastLearningDate === today) {
         return progress;
     }
@@ -75,15 +86,35 @@ export function recordLearningDay() {
         newStreak = progress.streak + 1;
     }
 
-    const updated = {
+    const updatedProgress = {
         ...progress,
         streak: newStreak,
         lastLearningDate: today,
     };
 
-    saveUserProgress(updated);
+    saveUserProgress(updatedProgress);
 
-    return updated;
+    // Sync the 7-day challenge.
+    const challenges = loadChallengeProgress();
+
+    const streakChallenge = challenges[3];
+
+    const updatedChallenges = {
+        ...challenges,
+        3: {
+            started: true,
+            completed: newStreak >= 7,
+            progress: Math.min(newStreak, 7),
+            startedAt:
+                streakChallenge?.startedAt ??
+                new Date().toISOString(),
+            lastActiveDate: today,
+        },
+    };
+
+    saveChallengeProgress(updatedChallenges);
+
+    return updatedProgress;
 }
 
 export function completeStage(stageId: number) {
@@ -107,6 +138,27 @@ export function completeStage(stageId: number) {
     };
 
     saveUserProgress(updated);
+
+    // Mark "Complete Today's Mission" as completed.
+    const challenges = loadChallengeProgress();
+
+    const updatedChallenges = {
+        ...challenges,
+        1: {
+            started: true,
+            completed: true,
+            progress: 1,
+            startedAt:
+                challenges[1]?.startedAt ??
+                new Date().toISOString(),
+            elapsedSeconds:
+                challenges[1]?.elapsedSeconds ?? 0,
+            lastActiveDate:
+                new Date().toISOString().split("T")[0],
+        },
+    };
+
+    saveChallengeProgress(updatedChallenges);
 
     return recordLearningDay();
 }

@@ -36,7 +36,6 @@ export default function ChallengeCard({
 
         const challenge = saved[id];
 
-        // Convert old saved challenge data safely
         if (
             challenge &&
             typeof challenge.elapsedSeconds !== "number"
@@ -60,6 +59,9 @@ export default function ChallengeCard({
 
     const completed =
         challenge?.completed ?? false;
+
+    const currentProgress =
+        challenge?.progress ?? 0;
 
     function handleStart() {
         const current = loadChallengeProgress();
@@ -135,7 +137,10 @@ export default function ChallengeCard({
         const current = loadChallengeProgress();
         const currentChallenge = current[id];
 
-        if (!currentChallenge || currentChallenge.completed) {
+        if (
+            !currentChallenge ||
+            currentChallenge.completed
+        ) {
             return;
         }
 
@@ -213,9 +218,6 @@ export default function ChallengeCard({
         return () => clearInterval(interval);
     }, [id, isRunning, target, type]);
 
-    const currentProgress =
-        challenge?.progress ?? 0;
-
     return (
         <div
             className={`rounded-3xl border p-6 shadow-sm transition-all duration-300 ${completed
@@ -237,6 +239,7 @@ export default function ChallengeCard({
                 {description}
             </p>
 
+            {/* Timer progress */}
             {type === "timer" &&
                 challenge?.started && (
                     <div className="mt-5">
@@ -264,11 +267,51 @@ export default function ChallengeCard({
                     </div>
                 )}
 
+            {/* Streak progress */}
+            {type === "streak" && (
+                <div className="mt-5">
+                    <div className="flex justify-between text-sm">
+                        <span>Progress</span>
+
+                        <span>
+                            {currentProgress}/{target} days
+                        </span>
+                    </div>
+
+                    <div className="mt-2 h-3 rounded-full bg-[var(--border)]">
+                        <div
+                            className="h-full rounded-full bg-[var(--primary)] transition-all"
+                            style={{
+                                width: `${Math.min(
+                                    (currentProgress /
+                                        target) *
+                                    100,
+                                    100
+                                )}%`,
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
+
             <div className="mt-5">
                 {completed ? (
                     <span className="font-medium text-green-600">
                         ✓ Completed
                     </span>
+                ) : type === "streak" ? (
+                    challenge?.started ? (
+                        <span className="text-sm text-[var(--text-secondary)]">
+                            Keep learning every day
+                        </span>
+                    ) : (
+                        <button
+                            onClick={handleStart}
+                            className="rounded-xl bg-[var(--primary)] px-5 py-3 text-white transition hover:opacity-90"
+                        >
+                            Start Challenge
+                        </button>
+                    )
                 ) : challenge?.started ? (
                     type === "timer" ? (
                         <button
