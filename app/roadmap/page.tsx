@@ -1,19 +1,18 @@
 "use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
 import TimelineItem from "@/components/roadmap/TimelineItem";
 import Button from "@/components/ui/Button";
 import BottomNav from "@/components/navigation/BottomNav";
 
 import { roadmap } from "@/lib/roadmap";
-
-
-import { useEffect, useState } from "react";
-import {
-    loadUserProgress,
-    completeCurrentStage,
-    loadProgress,
-} from "@/lib/storage";
+import { loadUserProgress } from "@/lib/storage";
 
 export default function JourneyPage() {
+    const router = useRouter();
+
     const [userProgress, setUserProgress] = useState<any>(null);
 
     useEffect(() => {
@@ -25,50 +24,72 @@ export default function JourneyPage() {
     }
 
     const currentRoadmap = roadmap[userProgress.selectedGoal];
-    function handleContinue() {
-        const updated = completeCurrentStage();
-        setUserProgress(updated);
+
+    if (!currentRoadmap) {
+        return null;
     }
+
+    const currentStage = currentRoadmap.stages.find(
+        (stage) => !userProgress.completedStages.includes(stage.id)
+    );
+
+    console.log("CURRENT STAGE:", currentStage);
+
+    function handleContinue() {
+        console.log("CURRENT STAGE:", currentStage);
+
+        if (!currentStage) return;
+
+        router.push(`/learn/${currentStage.id}`);
+    }
+
     return (
-        <main className="min-h-screen bg-[var(--background)] px-6 py-10 pb-24">
-            <div
-                className="w-full max-w-md"
-                style={{ margin: "0 auto" }}
-            >
-                <p className="text-sm text-[var(--text-secondary)]">
-                    Your Journey
-                </p>
+        <>
+            <main className="bg-[var(--background)]">
+                <div className="mx-auto min-h-screen w-full max-w-md px-6 py-10 pb-56">
 
-                <h1 className="mt-2 text-4xl font-bold">
-                    {currentRoadmap.title}
-                </h1>
+                    <p className="text-sm text-[var(--text-secondary)]">
+                        Your Journey
+                    </p>
 
-                <p className="mt-2 text-[var(--text-secondary)]">
-                    Follow your personalized learning path.
-                </p>
+                    <h1 className="mt-2 text-4xl font-bold">
+                        {currentRoadmap.title}
+                    </h1>
 
-                <section className="mt-10">
-                    {currentRoadmap.stages.map((stage, index) => (
-                        <TimelineItem
-                            key={stage.id}
-                            title={stage.title}
-                            duration={stage.duration}
-                            completed={userProgress.completedStages.includes(stage.id)}
-                            isLast={index === currentRoadmap.stages.length - 1}
-                        />
-                    ))}
-                </section>
+                    <p className="mt-2 text-[var(--text-secondary)]">
+                        Follow your personalized learning path.
+                    </p>
 
-                <Button
-                    fullWidth
-                    className="mt-6"
-                    onClick={handleContinue}
-                >
-                    Continue Learning
-                </Button>
+                    <section className="mt-10">
+                        {currentRoadmap.stages.map((stage, index) => (
+                            <TimelineItem
+                                key={stage.id}
+                                title={stage.title}
+                                duration={stage.duration}
+                                completed={userProgress.completedStages.includes(stage.id)}
+                                isLast={
+                                    index === currentRoadmap.stages.length - 1
+                                }
+                            />
+                        ))}
+                    </section>
+
+                </div>
+            </main>
+
+            <div className="fixed bottom-16 left-0 right-0 z-40 bg-gradient-to-t from-[var(--background)] via-[var(--background)] to-transparent px-6 pb-4 pt-8">
+                <div className="mx-auto w-full max-w-md">
+                    <Button
+                        fullWidth
+                        onClick={handleContinue}
+                        disabled={!currentStage}
+                    >
+                        Continue Learning
+                    </Button>
+                </div>
             </div>
 
             <BottomNav />
-        </main>
+        </>
     );
 }

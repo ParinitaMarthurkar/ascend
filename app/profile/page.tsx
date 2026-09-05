@@ -1,7 +1,23 @@
+"use client";
 import BottomNav from "@/components/navigation/BottomNav";
-import { userProgress } from "@/lib/userprogress";
+import { useEffect, useState } from "react";
+import { loadUserProgress } from "@/lib/storage";
 import { goals } from "@/lib/goals";
 export default function ProfilePage() {
+    const [userProgress, setUserProgress] = useState<ReturnType<typeof loadUserProgress> | null>(null);
+
+    useEffect(() => {
+        const progress = loadUserProgress();
+
+        console.log("PROFILE PROGRESS:", progress);
+
+        setUserProgress(progress);
+    }, []);
+
+    if (!userProgress) {
+        return null;
+    }
+
     const selectedGoal = goals.find(
         (goal) => goal.id === userProgress.selectedGoal
     );
