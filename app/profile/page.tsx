@@ -1,10 +1,13 @@
 "use client";
+
 import BottomNav from "@/components/navigation/BottomNav";
 import { useEffect, useState } from "react";
 import { loadUserProgress } from "@/lib/storage";
 import { goals } from "@/lib/goals";
+
 export default function ProfilePage() {
-    const [userProgress, setUserProgress] = useState<ReturnType<typeof loadUserProgress> | null>(null);
+    const [userProgress, setUserProgress] =
+        useState<ReturnType<typeof loadUserProgress> | null>(null);
 
     useEffect(() => {
         const progress = loadUserProgress();
@@ -21,6 +24,7 @@ export default function ProfilePage() {
     const selectedGoal = goals.find(
         (goal) => goal.id === userProgress.selectedGoal
     );
+
     return (
         <main className="min-h-screen bg-[var(--background)] px-6 py-8 pb-24">
             <div
@@ -47,27 +51,42 @@ export default function ProfilePage() {
 
                     <div className="flex items-center justify-between">
                         <span>Career Readiness</span>
-                        <strong>{userProgress.readiness}%</strong>
+
+                        <strong>
+                            {userProgress.readiness}%
+                        </strong>
                     </div>
 
                     <div className="mt-4 h-3 rounded-full bg-[var(--border)]">
                         <div
                             className="h-full rounded-full bg-[var(--primary)]"
-                            style={{ width: `${userProgress.readiness}%` }}
+                            style={{
+                                width: `${userProgress.readiness}%`,
+                            }}
                         />
                     </div>
 
                     <div className="mt-6 flex items-center justify-between">
                         <span>🔥 Current Streak</span>
 
-                        <strong>{userProgress.streak} Days</strong>
+                        <strong>
+                            {userProgress.streak} Days
+                        </strong>
+                    </div>
+
+                    <div className="mt-6 flex items-center justify-between">
+                        <span>⭐ XP</span>
+
+                        <strong>
+                            {userProgress.xp} XP
+                        </strong>
                     </div>
 
                 </div>
 
                 {/* Goal */}
                 <div className="mt-6 rounded-3xl border border-[var(--border)] bg-white p-6 shadow-sm">
-                    <h2 className="font-semibold text-lg">
+                    <h2 className="text-lg font-semibold">
                         Career Goal
                     </h2>
 

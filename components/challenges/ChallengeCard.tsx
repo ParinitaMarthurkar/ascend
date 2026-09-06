@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 
 import {
     loadChallengeProgress,
-    loadUserProgress,
     saveChallengeProgress,
+    loadUserProgress,
+    completeChallenge,
     ChallengeProgressMap,
 } from "@/lib/storage";
 
@@ -31,21 +32,58 @@ export default function ChallengeCard({
 
     const [isRunning, setIsRunning] =
         useState(false);
+
     const [streak, setStreak] = useState(0);
+
     useEffect(() => {
         const saved = loadChallengeProgress();
         const userProgress = loadUserProgress();
 
-        const challenge = saved[id];
-
         setStreak(userProgress.streak);
+
+        let updated = saved;
+
+        // Sync Challenge 4 with Python Fundamentals completion.
+        if (
+            id === 4 &&
+            userProgress.completedStages.includes(1)
+        ) {
+            const challenge = saved[4];
+
+            updated = {
+                ...saved,
+                4: {
+                    started: true,
+                    completed: true,
+                    progress: 1,
+                    startedAt:
+                        challenge?.startedAt ?? null,
+                    elapsedSeconds:
+                        challenge?.elapsedSeconds ?? 0,
+                    lastActiveDate:
+                        challenge?.lastActiveDate ?? null,
+                    xpAwarded:
+                        challenge?.xpAwarded ?? false,
+                },
+            };
+
+            saveChallengeProgress(updated);
+
+            // Award the 500 XP only once.
+            completeChallenge(4, xp);
+
+            // Reload after awarding XP so xpAwarded is reflected.
+            updated = loadChallengeProgress();
+        }
+
+        const challenge = updated[id];
 
         if (
             challenge &&
             typeof challenge.elapsedSeconds !== "number"
         ) {
-            const updated = {
-                ...saved,
+            updated = {
+                ...updated,
                 [id]: {
                     ...challenge,
                     elapsedSeconds: 0,
@@ -53,10 +91,9 @@ export default function ChallengeCard({
             };
 
             saveChallengeProgress(updated);
-            setProgress(updated);
-        } else {
-            setProgress(saved);
         }
+
+        setProgress(updated);
     }, [id]);
 
     const challenge = progress[id];
@@ -68,6 +105,7 @@ export default function ChallengeCard({
         type === "streak"
             ? streak
             : challenge?.progress ?? 0;
+
     function handleStart() {
         const current = loadChallengeProgress();
 
@@ -82,6 +120,8 @@ export default function ChallengeCard({
                     current[id]?.elapsedSeconds ?? 0,
                 lastActiveDate:
                     new Date().toISOString().split("T")[0],
+                xpAwarded:
+                    current[id]?.xpAwarded ?? false,
             },
         };
 
@@ -214,6 +254,8 @@ export default function ChallengeCard({
 
                 if (isCompleted) {
                     setIsRunning(false);
+
+                    completeChallenge(id, xp);
                 }
 
                 return updated;
@@ -221,7 +263,7 @@ export default function ChallengeCard({
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [id, isRunning, target, type]);
+    }, [id, isRunning, target, type, xp]);
 
     return (
         <div

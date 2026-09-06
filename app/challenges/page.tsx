@@ -20,9 +20,13 @@ export default function ChallengesPage() {
             const userProgress = loadUserProgress();
 
             const streak = userProgress.streak;
+            const pythonCompleted =
+                userProgress.completedStages.includes(1);
 
             const updatedChallenges = {
                 ...challengeProgress,
+
+                // 7-Day Streak
                 3: {
                     started: streak > 0,
                     completed: streak >= 7,
@@ -33,6 +37,23 @@ export default function ChallengesPage() {
                         challengeProgress[3]?.elapsedSeconds ?? 0,
                     lastActiveDate:
                         userProgress.lastLearningDate,
+                    xpAwarded:
+                        challengeProgress[3]?.xpAwarded ?? false,
+                },
+
+                // Python Fundamentals
+                4: {
+                    started: pythonCompleted,
+                    completed: pythonCompleted,
+                    progress: pythonCompleted ? 1 : 0,
+                    startedAt:
+                        challengeProgress[4]?.startedAt ?? null,
+                    elapsedSeconds:
+                        challengeProgress[4]?.elapsedSeconds ?? 0,
+                    lastActiveDate:
+                        challengeProgress[4]?.lastActiveDate ?? null,
+                    xpAwarded:
+                        challengeProgress[4]?.xpAwarded ?? false,
                 },
             };
 

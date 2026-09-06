@@ -5,6 +5,7 @@ export interface UserProgress {
     streak: number;
     todayMission: number;
     lastLearningDate: string | null;
+    xp: number;
 }
 
 const defaultProgress: UserProgress = {
@@ -14,6 +15,7 @@ const defaultProgress: UserProgress = {
     streak: 0,
     todayMission: 2,
     lastLearningDate: null,
+    xp: 0,
 };
 
 export function saveUserProgress(progress: UserProgress) {
@@ -44,6 +46,19 @@ export function loadUserProgress(): UserProgress {
     } catch {
         return defaultProgress;
     }
+}
+
+export function addXP(amount: number) {
+    const progress = loadUserProgress();
+
+    const updated = {
+        ...progress,
+        xp: progress.xp + amount,
+    };
+
+    saveUserProgress(updated);
+
+    return updated;
 }
 
 function getToday(): string {
@@ -94,7 +109,7 @@ export function recordLearningDay() {
 
     saveUserProgress(updatedProgress);
 
-    // Sync the 7-day challenge.
+    // Sync the 7-day streak challenge.
     const challenges = loadChallengeProgress();
 
     const streakChallenge = challenges[3];
@@ -111,10 +126,17 @@ export function recordLearningDay() {
             elapsedSeconds:
                 streakChallenge?.elapsedSeconds ?? 0,
             lastActiveDate: today,
+            xpAwarded:
+                streakChallenge?.xpAwarded ?? false,
         },
     };
 
     saveChallengeProgress(updatedChallenges);
+
+    // Award 7-day streak XP only once.
+    if (newStreak >= 7) {
+        completeChallenge(3, 300);
+    }
 
     return updatedProgress;
 }
@@ -141,28 +163,49 @@ export function completeStage(stageId: number) {
 
     saveUserProgress(updated);
 
-    // Mark "Complete Today's Mission" as completed.
+    // Complete "Today's Mission" and award 100 XP once.
+    completeChallenge(1, 100);
+
+    // Record today's learning activity.
+    return recordLearningDay();
+}
+
+export function completeChallenge(
+    challengeId: number,
+    xp: number
+) {
     const challenges = loadChallengeProgress();
+
+    const challenge = challenges[challengeId];
+
+    // XP has already been awarded for this challenge.
+    if (challenge?.xpAwarded) {
+        return false;
+    }
 
     const updatedChallenges = {
         ...challenges,
-        1: {
+        [challengeId]: {
+            ...(challenge ?? {
+                started: true,
+                completed: false,
+                progress: 0,
+                startedAt: null,
+                elapsedSeconds: 0,
+                lastActiveDate: null,
+                xpAwarded: false,
+            }),
             started: true,
             completed: true,
-            progress: 1,
-            startedAt:
-                challenges[1]?.startedAt ??
-                new Date().toISOString(),
-            elapsedSeconds:
-                challenges[1]?.elapsedSeconds ?? 0,
-            lastActiveDate:
-                new Date().toISOString().split("T")[0],
+            xpAwarded: true,
         },
     };
 
     saveChallengeProgress(updatedChallenges);
 
-    return recordLearningDay();
+    addXP(xp);
+
+    return true;
 }
 
 // Compatibility API
@@ -190,6 +233,7 @@ export function loadProgress<T>(
 export interface ChallengeProgress {
     started: boolean;
     completed: boolean;
+    xpAwarded?: boolean;
     progress: number;
     startedAt: string | null;
     elapsedSeconds: number;
